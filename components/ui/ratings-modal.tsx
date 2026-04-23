@@ -22,6 +22,7 @@ interface RatingsModalProps {
   onClose: () => void;
   onEdit?: (rating: Rating) => void;
   onDelete?: (rating: Rating) => void;
+  onDeletePress?: (rating: Rating) => void;
   onReport?: (rating: Rating) => void;
 }
 
@@ -33,6 +34,7 @@ export function RatingsModal({
   onClose,
   onEdit,
   onDelete,
+  onDeletePress,
   onReport,
 }: RatingsModalProps) {
   return (
@@ -64,6 +66,7 @@ export function RatingsModal({
               currentUserId={currentUserId}
               onEdit={onEdit}
               onDelete={onDelete}
+              onDeletePress={onDeletePress}
               onReport={onReport}
             />
           )}

@@ -1,8 +1,8 @@
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 
 import { RatingCard } from '../components/ui/rating-card';
 
-const mockOnDelete = jest.fn();
+const mockOnDeletePress = jest.fn();
 const mockGetUserProfile = jest.fn();
 
 jest.mock('@/services/user-service', () => ({
@@ -25,7 +25,7 @@ describe('RatingCard', () => {
     mockGetUserProfile.mockResolvedValue({ displayName: 'Danilo' });
   });
 
-  it('abre a confirmação e chama o callback ao excluir', async () => {
+  it('solicita exclusão ao clicar no botão', async () => {
     const rating = {
       id: 'rating-1',
       prestadorWhatsapp: '5511999999999',
@@ -42,7 +42,7 @@ describe('RatingCard', () => {
       <RatingCard
         rating={rating}
         currentUserId="user-1"
-        onDelete={mockOnDelete}
+        onDeletePress={mockOnDeletePress}
       />
     );
 
@@ -50,23 +50,9 @@ describe('RatingCard', () => {
       expect(screen.getByText('Excluir')).toBeTruthy();
     });
 
-    await act(async () => {
-      fireEvent.press(screen.getByText('Excluir'));
-    });
+    fireEvent.press(screen.getByText('Excluir'));
 
-    await waitFor(() => {
-      expect(screen.getByText('Tem certeza que deseja excluir esta avaliação? Esta ação não pode ser desfeita.')).toBeTruthy();
-    });
-
-    const deleteButtons = screen.getAllByText('Excluir');
-
-    await act(async () => {
-      fireEvent.press(deleteButtons[deleteButtons.length - 1]);
-    });
-
-    await waitFor(() => {
-      expect(mockOnDelete).toHaveBeenCalledWith(rating);
-    });
+    expect(mockOnDeletePress).toHaveBeenCalledWith(rating);
   });
 });
 

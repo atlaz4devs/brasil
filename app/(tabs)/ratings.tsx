@@ -14,6 +14,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSnackbar } from '../../components/ui/snackbar';
 
+import { CustomDialog } from '@/components/ui/custom-dialog';
 import { RatingCard } from '@/components/ui/rating-card';
 import { ReportModal } from '@/components/ui/report-modal';
 import { useAuth } from '@/contexts/auth-context';
@@ -35,6 +36,8 @@ export default function RatingsScreen() {
   // Modal de denúncia
   const [reportModalVisible, setReportModalVisible] = useState(false);
   const [selectedRatingForReport, setSelectedRatingForReport] = useState<Rating | null>(null);
+  const [pendingDeleteRating, setPendingDeleteRating] = useState<Rating | null>(null);
+  const [deleteConfirmVisible, setDeleteConfirmVisible] = useState(false);
 
   const loadRatings = useCallback(async () => {
     if (!user) return;
@@ -74,8 +77,12 @@ export default function RatingsScreen() {
     });
   };
 
+  const handleDeletePress = (rating: Rating) => {
+    setPendingDeleteRating(rating);
+    setDeleteConfirmVisible(true);
+  };
+
   const handleDeleteRating = async (rating: Rating) => {
-    console.log(rating);
     try {
       await deleteRating(rating.id);
       show('Avaliação excluída com sucesso!', { backgroundColor: '#006e1c' });
@@ -114,6 +121,7 @@ export default function RatingsScreen() {
         currentUserId={user?.uid}
         onEdit={handleEditRating}
         onDelete={handleDeleteRating}
+        onDeletePress={handleDeletePress}
         onReport={handleReportRating}
         showProviderInfo={false}
       />
@@ -178,6 +186,37 @@ export default function RatingsScreen() {
           }}
           onError={(error) => {
             show(error, { backgroundColor: '#ba1a1a' });
+          }}
+        />
+      )}
+
+      {pendingDeleteRating && (
+        <CustomDialog
+          visible={deleteConfirmVisible}
+          title="Excluir avaliação"
+          message="Tem certeza que deseja excluir esta avaliação? Esta ação não pode ser desfeita."
+          buttons={[
+            {
+              text: 'Cancelar',
+              style: 'cancel',
+              onPress: () => {
+                setDeleteConfirmVisible(false);
+                setPendingDeleteRating(null);
+              },
+            },
+            {
+              text: 'Excluir',
+              style: 'destructive',
+              onPress: () => {
+                handleDeleteRating(pendingDeleteRating);
+                setDeleteConfirmVisible(false);
+                setPendingDeleteRating(null);
+              },
+            },
+          ]}
+          onClose={() => {
+            setDeleteConfirmVisible(false);
+            setPendingDeleteRating(null);
           }}
         />
       )}

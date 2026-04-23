@@ -10,7 +10,6 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Rating } from '@/services/rating-service';
 import { getUserProfile } from '@/services/user-service';
 
-import { CustomDialog } from './custom-dialog';
 import { StarRating } from './star-rating';
 
 interface RatingCardProps {
@@ -18,6 +17,7 @@ interface RatingCardProps {
   currentUserId?: string;
   onEdit?: (rating: Rating) => void;
   onDelete?: (rating: Rating) => void;
+  onDeletePress?: (rating: Rating) => void;
   onReport?: (rating: Rating) => void;
   showProviderInfo?: boolean;
 }
@@ -27,13 +27,13 @@ export function RatingCard({
   currentUserId,
   onEdit,
   onDelete,
+  onDeletePress,
   onReport,
   showProviderInfo = false,
 }: RatingCardProps) {
   const isOwner = currentUserId === rating.userId;
   const [displayName, setDisplayName] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
-  const [confirmDeleteVisible, setConfirmDeleteVisible] = useState(false);
 
   useEffect(() => {
     loadDisplayName();
@@ -63,7 +63,12 @@ export function RatingCard({
   };
 
   const handleDelete = () => {
-    setConfirmDeleteVisible(true);
+    if (onDeletePress) {
+      onDeletePress(rating);
+      return;
+    }
+
+    onDelete?.(rating);
   };
 
   const formatDate = (date: Date) => {
@@ -127,21 +132,6 @@ export function RatingCard({
           </TouchableOpacity>
         )}
       </View>
-
-      <CustomDialog
-        visible={confirmDeleteVisible}
-        title="Excluir avaliação"
-        message="Tem certeza que deseja excluir esta avaliação? Esta ação não pode ser desfeita."
-        buttons={[
-          { text: 'Cancelar', style: 'cancel' },
-          {
-            text: 'Excluir',
-            style: 'destructive',
-            onPress: () => onDelete?.(rating),
-          },
-        ]}
-        onClose={() => setConfirmDeleteVisible(false)}
-      />
     </View>
   );
 }
