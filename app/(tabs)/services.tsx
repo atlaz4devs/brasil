@@ -13,7 +13,6 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSnackbar } from '../../components/ui/snackbar';
 
-import { CustomDialog } from '@/components/ui/custom-dialog';
 import { RatingsModal } from '@/components/ui/ratings-modal';
 import { ReportModal } from '@/components/ui/report-modal';
 import { ServiceSelect } from '@/components/ui/service-select';
@@ -330,34 +329,14 @@ export default function ServicesScreen() {
           onDelete={handleDeleteRating}
           onDeletePress={handleDeletePress}
           onReport={handleReportRating}
-        />
-      )}
-
-      {pendingDeleteRating && (
-        <CustomDialog
-          visible={deleteConfirmVisible}
-          title="Excluir avaliação"
-          message="Tem certeza que deseja excluir esta avaliação? Esta ação não pode ser desfeita."
-          buttons={[
-            {
-              text: 'Cancelar',
-              style: 'cancel',
-              onPress: () => {
-                setDeleteConfirmVisible(false);
-                setPendingDeleteRating(null);
-              },
-            },
-            {
-              text: 'Excluir',
-              style: 'destructive',
-              onPress: () => {
-                handleDeleteRating(pendingDeleteRating);
-                setDeleteConfirmVisible(false);
-                setPendingDeleteRating(null);
-              },
-            },
-          ]}
-          onClose={() => {
+          deleteConfirmVisible={deleteConfirmVisible}
+          pendingDeleteRating={pendingDeleteRating}
+          onDeleteConfirm={(rating) => {
+            handleDeleteRating(rating);
+            setDeleteConfirmVisible(false);
+            setPendingDeleteRating(null);
+          }}
+          onDeleteCancel={() => {
             setDeleteConfirmVisible(false);
             setPendingDeleteRating(null);
           }}

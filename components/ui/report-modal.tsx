@@ -72,6 +72,8 @@ export function ReportModal({
       visible={visible}
       transparent
       animationType="fade"
+      presentationStyle="overFullScreen"
+      statusBarTranslucent
       onRequestClose={handleClose}
     >
       <TouchableOpacity

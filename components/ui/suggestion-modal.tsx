@@ -85,6 +85,7 @@ export function SuggestionModal({
       visible={visible}
       animationType="slide"
       presentationStyle="pageSheet"
+      statusBarTranslucent
       onRequestClose={handleClose}
     >
       <KeyboardAvoidingView

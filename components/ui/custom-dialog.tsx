@@ -53,6 +53,8 @@ export function CustomDialog({
       visible={visible}
       transparent
       animationType="fade"
+      presentationStyle="overFullScreen"
+      statusBarTranslucent
       onRequestClose={onClose}
     >
       <TouchableWithoutFeedback onPress={handleBackdropPress}>

@@ -344,6 +344,8 @@ export default function ContactSettingsScreen() {
         visible={showVerificationDialog}
         transparent
         animationType="fade"
+        presentationStyle="overFullScreen"
+        statusBarTranslucent
         onRequestClose={() => {
           setShowVerificationDialog(false);
           setInputCode('');

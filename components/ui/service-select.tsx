@@ -69,6 +69,8 @@ export function ServiceSelect({
         visible={modalVisible}
         animationType="slide"
         transparent={true}
+        presentationStyle="overFullScreen"
+        statusBarTranslucent
         onRequestClose={() => {
           setModalVisible(false);
           setShowCustomInput(false);

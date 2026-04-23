@@ -183,6 +183,8 @@ export function WhatsappInput({
         visible={showCountryPicker}
         transparent
         animationType="fade"
+        presentationStyle="overFullScreen"
+        statusBarTranslucent
         onRequestClose={() => {
           setShowCountryPicker(false);
           setCountryFilter('');

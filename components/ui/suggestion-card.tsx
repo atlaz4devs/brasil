@@ -135,6 +135,7 @@ export function SuggestionCard({
         visible={modalVisible}
         animationType="slide"
         presentationStyle="pageSheet"
+        statusBarTranslucent
         onRequestClose={() => setModalVisible(false)}
       >
         <View style={[styles.modalContainer, { backgroundColor: colors.background }]}>

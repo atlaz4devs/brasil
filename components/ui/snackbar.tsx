@@ -1,6 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import {
     Animated,
+    Modal,
     StyleSheet,
     Text,
     TouchableOpacity,
@@ -105,30 +106,39 @@ export function SnackbarProvider({ children }: SnackbarProviderProps) {
   return (
     <SnackbarContext.Provider value={{ show, hide }}>
       {children}
-      {visible && (
-        <Animated.View
-          style={[
-            styles.container,
-            {
-              top: insets.top + 10,
-              transform: [{ translateY }],
-              opacity,
-              backgroundColor: options.backgroundColor || '#323232',
-            },
-          ]}
-        >
-          <View style={styles.content}>
-            <Text style={styles.message} numberOfLines={2}>
-              {message}
-            </Text>
-            {options.label && (
-              <TouchableOpacity onPress={handleActionPress} style={styles.actionButton}>
-                <Text style={styles.actionText}>{options.label}</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-        </Animated.View>
-      )}
+      <Modal
+        visible={visible}
+        transparent
+        animationType="none"
+        statusBarTranslucent
+        presentationStyle="overFullScreen"
+        onRequestClose={hide}
+      >
+        <View pointerEvents="box-none" style={styles.modalRoot}>
+          <Animated.View
+            style={[
+              styles.container,
+              {
+                top: insets.top + 10,
+                transform: [{ translateY }],
+                opacity,
+                backgroundColor: options.backgroundColor || '#323232',
+              },
+            ]}
+          >
+            <View style={styles.content}>
+              <Text style={styles.message} numberOfLines={2}>
+                {message}
+              </Text>
+              {options.label && (
+                <TouchableOpacity onPress={handleActionPress} style={styles.actionButton}>
+                  <Text style={styles.actionText}>{options.label}</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          </Animated.View>
+        </View>
+      </Modal>
     </SnackbarContext.Provider>
   );
 }
@@ -156,6 +166,9 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.27,
     shadowRadius: 4.65,
+  },
+  modalRoot: {
+    flex: 1,
   },
   content: {
     flexDirection: 'row',

@@ -12,6 +12,7 @@ import {
 
 import { Rating } from '@/services/rating-service';
 
+import { CustomDialog } from './custom-dialog';
 import { RatingCard } from './rating-card';
 
 interface RatingsModalProps {
@@ -24,6 +25,10 @@ interface RatingsModalProps {
   onDelete?: (rating: Rating) => void;
   onDeletePress?: (rating: Rating) => void;
   onReport?: (rating: Rating) => void;
+  deleteConfirmVisible?: boolean;
+  pendingDeleteRating?: Rating | null;
+  onDeleteConfirm?: (rating: Rating) => void;
+  onDeleteCancel?: () => void;
 }
 
 export function RatingsModal({
@@ -36,12 +41,18 @@ export function RatingsModal({
   onDelete,
   onDeletePress,
   onReport,
+  deleteConfirmVisible = false,
+  pendingDeleteRating = null,
+  onDeleteConfirm,
+  onDeleteCancel,
 }: RatingsModalProps) {
   return (
     <Modal
       visible={visible}
       animationType="slide"
       transparent={false}
+      presentationStyle="overFullScreen"
+      statusBarTranslucent
       onRequestClose={onClose}
     >
       <View style={styles.container}>
@@ -73,6 +84,27 @@ export function RatingsModal({
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
         />
+
+        {pendingDeleteRating && (
+          <CustomDialog
+            visible={deleteConfirmVisible}
+            title="Excluir avaliação"
+            message="Tem certeza que deseja excluir esta avaliação? Esta ação não pode ser desfeita."
+            buttons={[
+              {
+                text: 'Cancelar',
+                style: 'cancel',
+                onPress: onDeleteCancel,
+              },
+              {
+                text: 'Excluir',
+                style: 'destructive',
+                onPress: () => onDeleteConfirm?.(pendingDeleteRating),
+              },
+            ]}
+            onClose={onDeleteCancel}
+          />
+        )}
       </View>
     </Modal>
   );
