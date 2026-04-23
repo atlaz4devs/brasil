@@ -11,7 +11,7 @@ import {
 import { HugeiconsIcon } from '@hugeicons/react-native';
 import { useRouter } from 'expo-router';
 import { signOut } from 'firebase/auth';
-import React, { useState } from 'react';
+import React from 'react';
 import {
   Alert,
   Animated,
@@ -83,7 +83,6 @@ export default function ProfileScreen() {
   const isDark = colorScheme === 'dark';
   const colors = Colors[colorScheme ?? 'light'];
   const insets = useSafeAreaInsets();
-  const [activeTab, setActiveTab] = useState<'trips' | 'connections'>('trips');
   const scrollY = new Animated.Value(0);
 
   const handleLogoutPress = () => {
@@ -223,54 +222,6 @@ export default function ProfileScreen() {
           <ThemedText style={styles.userName}>{displayName}</ThemedText>
         </Animated.View>
 
-        {/* Tabs (estado expandido) */}
-        <Animated.View style={[styles.tabsContainer, { opacity: expandedContentOpacity }]}>
-          <Pressable
-            style={[
-              styles.tabButton,
-              activeTab === 'trips' && styles.tabButtonActive,
-              {
-                backgroundColor: activeTab === 'trips'
-                  ? (isDark ? '#333' : '#f0f0f0')
-                  : 'transparent',
-                borderColor: isDark ? '#444' : '#ddd',
-              },
-            ]}
-            onPress={() => setActiveTab('trips')}
-          >
-            <ThemedText
-              style={[
-                styles.tabButtonText,
-                activeTab === 'trips' && styles.tabButtonTextActive,
-              ]}
-            >
-              Viagens anteriores
-            </ThemedText>
-          </Pressable>
-          <Pressable
-            style={[
-              styles.tabButton,
-              activeTab === 'connections' && styles.tabButtonActive,
-              {
-                backgroundColor: activeTab === 'connections'
-                  ? (isDark ? '#333' : '#f0f0f0')
-                  : 'transparent',
-                borderColor: isDark ? '#444' : '#ddd',
-              },
-            ]}
-            onPress={() => setActiveTab('connections')}
-          >
-            <ThemedText
-              style={[
-                styles.tabButtonText,
-                activeTab === 'connections' && styles.tabButtonTextActive,
-              ]}
-            >
-              Conexões
-            </ThemedText>
-          </Pressable>
-        </Animated.View>
-
         {/* Estado Colapsado - Título "Perfil" + avatar pequeno */}
         <Animated.View
           style={[
@@ -372,28 +323,6 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 24,
     fontWeight: 'bold',
-  },
-  tabsContainer: {
-    flexDirection: 'row',
-    gap: 12,
-    paddingHorizontal: 20,
-    marginBottom: 20,
-  },
-  tabButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 25,
-    borderWidth: 1,
-  },
-  tabButtonActive: {
-    borderColor: 'transparent',
-  },
-  tabButtonText: {
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  tabButtonTextActive: {
-    fontWeight: '600',
   },
   collapsedHeader: {
     position: 'absolute',
