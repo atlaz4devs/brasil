@@ -1,7 +1,6 @@
 
 import {
   ArrowRight01Icon,
-  Bug02Icon,
   Idea01Icon,
   LockPasswordIcon,
   Logout01Icon,
@@ -113,31 +112,6 @@ export default function ProfileScreen() {
       router.replace('/auth/welcome');
     } catch (error) {
       console.error('Erro ao sair:', error);
-    }
-  };
-
-  const handleDebugPress = () => {
-    const debugInfo = {
-      uid: user?.uid,
-      email: user?.email,
-      displayName: user?.displayName,
-      photoURL: user?.photoURL,
-      emailVerified: user?.emailVerified,
-      creationTime: user?.metadata?.creationTime,
-      lastSignInTime: user?.metadata?.lastSignInTime,
-      providerData: user?.providerData,
-    };
-    
-    if (Platform.OS === 'web') {
-      console.log('=== DEBUG USER INFO ===');
-      console.log(JSON.stringify(debugInfo, null, 2));
-      alert('Dados do usuário:\n\n' + JSON.stringify(debugInfo, null, 2));
-    } else {
-      Alert.alert(
-        '🐛 Debug - User Info',
-        JSON.stringify(debugInfo, null, 2),
-        [{ text: 'OK' }]
-      );
     }
   };
 
@@ -274,7 +248,6 @@ export default function ProfileScreen() {
         >
           <MenuItem icon={Settings01FreeIcons} label="Configurações de conta" onPress={() => router.push('/(tabs)/(profile)/account-settings')} showDivider fullWidthDivider />
           <MenuItem icon={Idea01Icon} label="Sugestões de melhorias" onPress={() => router.push('/(tabs)/(profile)/suggestions')} showDivider fullWidthDivider />
-          <MenuItem icon={Bug02Icon} label="🐛 Debug User Info" onPress={handleDebugPress} showDivider fullWidthDivider />
           <MenuItem icon={LockPasswordIcon} label="Alterar senha" onPress={() => router.push('/(tabs)/(profile)/change-password')} showDivider fullWidthDivider />
           <MenuItem
             icon={Logout01Icon}
