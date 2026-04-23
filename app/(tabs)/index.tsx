@@ -184,7 +184,7 @@ export default function HomeScreen() {
     <SafeAreaView style={styles.container} edges={['top']}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Buscar Prestador</Text>
+        <Text style={styles.headerTitle}>Consultar Avaliações de Prestador</Text>
         <Text style={styles.headerSubtitle}>
           Encontre avaliações por número de WhatsApp
         </Text>
