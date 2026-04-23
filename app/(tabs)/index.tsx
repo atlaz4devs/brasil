@@ -82,16 +82,17 @@ export default function HomeScreen() {
       await deleteRating(rating.id);
       show('Avaliação excluída com sucesso!', { backgroundColor: '#006e1c' });
       
-      // Atualiza a lista
-      if (searchResults) {
-        const updatedResults = searchResults.filter((r) => r.id !== rating.id);
-        setSearchResults(updatedResults);
-        
-        // Fecha o modal se não houver mais avaliações
+      setSearchResults((currentResults) => {
+        if (!currentResults) return currentResults;
+
+        const updatedResults = currentResults.filter((r) => r.id !== rating.id);
+
         if (updatedResults.length === 0) {
           setRatingsModalVisible(false);
         }
-      }
+
+        return updatedResults;
+      });
     } catch (error) {
       console.error('Erro ao excluir avaliação:', error);
       show('Erro ao excluir avaliação. Tente novamente.', { backgroundColor: '#ba1a1a' });

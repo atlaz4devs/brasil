@@ -5,11 +5,12 @@ import {
 } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react-native';
 import React, { useEffect, useState } from 'react';
-import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import { Rating } from '@/services/rating-service';
 import { getUserProfile } from '@/services/user-service';
 
+import { CustomDialog } from './custom-dialog';
 import { StarRating } from './star-rating';
 
 interface RatingCardProps {
@@ -32,6 +33,7 @@ export function RatingCard({
   const isOwner = currentUserId === rating.userId;
   const [displayName, setDisplayName] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
+  const [confirmDeleteVisible, setConfirmDeleteVisible] = useState(false);
 
   useEffect(() => {
     loadDisplayName();
@@ -40,15 +42,12 @@ export function RatingCard({
 
   const loadDisplayName = async () => {
     try {
-      // Tenta buscar o displayName do perfil
       const profile = await getUserProfile(rating.userId);
       if (profile?.displayName) {
         setDisplayName(profile.displayName);
       } else if (!rating.userName.includes('@')) {
-        // Se não tiver perfil mas userName não for email, usa userName
         setDisplayName(rating.userName);
       } else {
-        // Se for email e não tiver perfil, é anônimo
         setDisplayName('Usuário anônimo');
       }
     } catch (error) {
@@ -64,18 +63,7 @@ export function RatingCard({
   };
 
   const handleDelete = () => {
-    Alert.alert(
-      'Excluir avaliação',
-      'Tem certeza que deseja excluir esta avaliação? Esta ação não pode ser desfeita.',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Excluir',
-          style: 'destructive',
-          onPress: () => onDelete?.(rating),
-        },
-      ]
-    );
+    setConfirmDeleteVisible(true);
   };
 
   const formatDate = (date: Date) => {
@@ -88,7 +76,6 @@ export function RatingCard({
 
   return (
     <View style={styles.container}>
-      {/* Header com nome e data */}
       <View style={styles.header}>
         <View style={styles.userInfo}>
           <Text style={styles.userName}>
@@ -99,7 +86,6 @@ export function RatingCard({
         <StarRating value={rating.rating} readonly size={16} spacing={2} />
       </View>
 
-      {/* Info do prestador (se aplicável) */}
       {showProviderInfo && (
         <>
           <Text style={styles.providerName}>
@@ -111,10 +97,8 @@ export function RatingCard({
         </>
       )}
 
-      {/* Comentário */}
       <Text style={styles.comment}>{rating.comment}</Text>
 
-      {/* Ações */}
       <View style={styles.actions}>
         {isOwner ? (
           <>
@@ -143,6 +127,21 @@ export function RatingCard({
           </TouchableOpacity>
         )}
       </View>
+
+      <CustomDialog
+        visible={confirmDeleteVisible}
+        title="Excluir avaliação"
+        message="Tem certeza que deseja excluir esta avaliação? Esta ação não pode ser desfeita."
+        buttons={[
+          { text: 'Cancelar', style: 'cancel' },
+          {
+            text: 'Excluir',
+            style: 'destructive',
+            onPress: () => onDelete?.(rating),
+          },
+        ]}
+        onClose={() => setConfirmDeleteVisible(false)}
+      />
     </View>
   );
 }

@@ -3,13 +3,13 @@ import { HugeiconsIcon } from '@hugeicons/react-native';
 import { router, useFocusEffect } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import {
-    ActivityIndicator,
-    FlatList,
-    RefreshControl,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  FlatList,
+  RefreshControl,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSnackbar } from '../../components/ui/snackbar';
@@ -18,10 +18,10 @@ import { RatingCard } from '@/components/ui/rating-card';
 import { ReportModal } from '@/components/ui/report-modal';
 import { useAuth } from '@/contexts/auth-context';
 import {
-    deleteRating,
-    formatWhatsappDisplay,
-    getRatingsByUser,
-    Rating,
+  deleteRating,
+  formatWhatsappDisplay,
+  getRatingsByUser,
+  Rating,
 } from '@/services/rating-service';
 
 export default function RatingsScreen() {
@@ -75,10 +75,11 @@ export default function RatingsScreen() {
   };
 
   const handleDeleteRating = async (rating: Rating) => {
+    console.log(rating);
     try {
       await deleteRating(rating.id);
       show('Avaliação excluída com sucesso!', { backgroundColor: '#006e1c' });
-      setRatings(ratings.filter((r) => r.id !== rating.id));
+      setRatings((currentRatings) => currentRatings.filter((r) => r.id !== rating.id));
     } catch (error) {
       console.error('Erro ao excluir avaliação:', error);
       show('Erro ao excluir avaliação. Tente novamente.', { backgroundColor: '#ba1a1a' });

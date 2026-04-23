@@ -151,9 +151,11 @@ export default function ServicesScreen() {
       
       if (updatedRatings.length === 0) {
         // Remove o provider se não tiver mais avaliações
-        setProviders(providers.filter((p) => 
-          p.prestadorWhatsapp !== selectedProvider.prestadorWhatsapp
-        ));
+        setProviders((currentProviders) =>
+          currentProviders.filter((p) =>
+            p.prestadorWhatsapp !== selectedProvider.prestadorWhatsapp
+          )
+        );
         setRatingsModalVisible(false);
         setSelectedProvider(null);
       } else {
@@ -168,9 +170,11 @@ export default function ServicesScreen() {
           averageRating: calculateAverageRating(updatedRatings),
         };
         setSelectedProvider(updatedProvider);
-        setProviders(providers.map((p) => 
-          p.prestadorWhatsapp === selectedProvider.prestadorWhatsapp ? updatedProvider : p
-        ));
+        setProviders((currentProviders) =>
+          currentProviders.map((p) =>
+            p.prestadorWhatsapp === selectedProvider.prestadorWhatsapp ? updatedProvider : p
+          )
+        );
       }
     } catch (error) {
       console.error('Erro ao excluir avaliação:', error);
