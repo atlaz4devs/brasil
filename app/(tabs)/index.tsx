@@ -4,9 +4,11 @@ import { router } from 'expo-router';
 import React, { useState } from 'react';
 import {
   ActivityIndicator,
+  Keyboard,
   StyleSheet,
   Text,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -41,6 +43,8 @@ export default function HomeScreen() {
   const [deleteConfirmVisible, setDeleteConfirmVisible] = useState(false);
 
   const handleSearch = async () => {
+    Keyboard.dismiss();
+
     if (!searchWhatsapp || searchWhatsapp.length < 10) {
       show('Digite um número de WhatsApp válido.', { backgroundColor: '#ba1a1a' });
       return;
@@ -180,6 +184,7 @@ export default function HomeScreen() {
   };
 
   return (
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
     <SafeAreaView style={styles.container} edges={['top']}>
       {/* Header */}
       <View style={styles.header}>
@@ -276,6 +281,7 @@ export default function HomeScreen() {
         />
       )}
     </SafeAreaView>
+    </TouchableWithoutFeedback>
   );
 }
 
