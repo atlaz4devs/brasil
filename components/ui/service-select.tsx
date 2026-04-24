@@ -80,22 +80,22 @@ export function ServiceSelect({
         statusBarTranslucent
         onRequestClose={closeModal}
       >
-        <KeyboardAvoidingView
-          style={styles.modalKeyboardAvoiding}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>
-                  {showCustomInput ? 'Novo serviÃ§o' : 'Selecione o serviÃ§o'}
-                </Text>
-                <TouchableOpacity onPress={closeModal} style={styles.closeButton}>
-                  <Text style={styles.closeButtonText}>Fechar</Text>
-                </TouchableOpacity>
-              </View>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>
+                {showCustomInput ? 'Novo serviÃ§o' : 'Selecione o serviÃ§o'}
+              </Text>
+              <TouchableOpacity onPress={closeModal} style={styles.closeButton}>
+                <Text style={styles.closeButtonText}>Fechar</Text>
+              </TouchableOpacity>
+            </View>
 
-              {showCustomInput ? (
+            {showCustomInput ? (
+              <KeyboardAvoidingView
+                style={styles.modalBody}
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+              >
                 <ScrollView
                   contentContainerStyle={styles.customInputContainer}
                   keyboardShouldPersistTaps="handled"
@@ -135,45 +135,51 @@ export function ServiceSelect({
                     </TouchableOpacity>
                   </View>
                 </ScrollView>
-              ) : (
-                <>
-                  {allowCustom && (
-                    <View style={styles.topAction}>
-                      <TouchableOpacity
-                        style={styles.otherOptionButton}
-                        onPress={() => handleSelect('OUTRO')}
-                      >
-                        <Text style={styles.otherOptionText}>+ Outro serviÃ§o</Text>
-                      </TouchableOpacity>
-                    </View>
-                  )}
+              </KeyboardAvoidingView>
+            ) : (
+              <View style={styles.modalBody}>
+                {allowCustom && (
+                  <View style={styles.topAction}>
+                    <TouchableOpacity
+                      style={styles.otherOptionButton}
+                      onPress={() => handleSelect('OUTRO')}
+                    >
+                      <Text style={styles.otherOptionText}>+ Outro serviÃ§o</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
 
-                  <ScrollView style={styles.optionsList} keyboardShouldPersistTaps="handled">
-                    {services.map((service) => (
-                      <TouchableOpacity
-                        key={service}
+                <ScrollView
+                  style={styles.optionsList}
+                  contentContainerStyle={styles.optionsListContent}
+                  keyboardShouldPersistTaps="handled"
+                  nestedScrollEnabled
+                  showsVerticalScrollIndicator={true}
+                >
+                  {services.map((service) => (
+                    <TouchableOpacity
+                      key={service}
+                      style={[
+                        styles.optionItem,
+                        selectedService === service && styles.optionItemSelected,
+                      ]}
+                      onPress={() => handleSelect(service)}
+                    >
+                      <Text
                         style={[
-                          styles.optionItem,
-                          selectedService === service && styles.optionItemSelected,
+                          styles.optionText,
+                          selectedService === service && styles.optionTextSelected,
                         ]}
-                        onPress={() => handleSelect(service)}
                       >
-                        <Text
-                          style={[
-                            styles.optionText,
-                            selectedService === service && styles.optionTextSelected,
-                          ]}
-                        >
-                          {service}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </ScrollView>
-                </>
-              )}
-            </View>
+                        {service}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+            )}
           </View>
-        </KeyboardAvoidingView>
+        </View>
       </Modal>
     </View>
   );
@@ -208,9 +214,6 @@ const styles = StyleSheet.create({
   placeholder: {
     color: '#9CA3AF',
   },
-  modalKeyboardAvoiding: {
-    flex: 1,
-  },
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
@@ -220,8 +223,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    maxHeight: '70%',
+    maxHeight: '80%',
+    minHeight: 220,
     paddingBottom: 40,
+    width: '100%',
+  },
+  modalBody: {
+    flex: 1,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -247,6 +255,9 @@ const styles = StyleSheet.create({
   },
   optionsList: {
     flex: 1,
+  },
+  optionsListContent: {
+    paddingBottom: 16,
   },
   optionItem: {
     paddingHorizontal: 24,
