@@ -1,8 +1,10 @@
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { doc, getDoc } from 'firebase/firestore';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
     ActivityIndicator,
+    Dimensions,
+    Keyboard,
     KeyboardAvoidingView,
     Platform,
     ScrollView,
@@ -14,11 +16,11 @@ import {
 } from 'react-native';
 import { useSnackbar } from '../../components/ui/snackbar';
 
-import { InputField } from '@/components/ui/input-field';
+import { InputField, type InputFieldRef } from '@/components/ui/input-field';
 import { PrimaryButton } from '@/components/ui/primary-button';
 import { ServiceSelect } from '@/components/ui/service-select';
 import { StarRating } from '@/components/ui/star-rating';
-import { WhatsappInput } from '@/components/ui/whatsapp-input';
+import { WhatsappInput, type WhatsappInputRef } from '@/components/ui/whatsapp-input';
 import { useAuth } from '@/contexts/auth-context';
 import { db } from '@/firebaseConfig';
 import {
@@ -60,19 +62,131 @@ export default function RatingFormScreen() {
     comment?: string;
   }>({});
 
+  const scrollViewRef = useRef<ScrollView>(null);
+  const scrollViewY = useRef(0);
+  const whatsappRef = useRef<WhatsappInputRef>(null);
+  const prestadorRef = useRef<InputFieldRef>(null);
+  const commentRef = useRef<TextInput>(null);
+  const keyboardTopRef = useRef(Dimensions.get('window').height);
+  const keyboardVisibleRef = useRef(false);
+  const keyboardSettledTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const keyboardScrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingFocusRef = useRef<{ y: number; height: number } | null>(null);
+
   // Carrega serviços disponíveis
   useEffect(() => {
     loadServices();
-  }, []);
+  }, [loadServices]);
 
   // Carrega dados da avaliação se estiver editando
   useEffect(() => {
     if (isEditing && id) {
       loadRating();
     }
-  }, [id]);
+  }, [id, isEditing, loadRating]);
 
-  const loadServices = async () => {
+  const scrollFocusedFieldIntoView = useCallback((layout: { y: number; height: number }) => {
+    const keyboardTop = keyboardTopRef.current;
+    const fieldBottom = layout.y + layout.height;
+    const visibleBottom = keyboardTop - 24;
+
+    if (fieldBottom <= visibleBottom) {
+      return;
+    }
+
+    const nextOffset = scrollViewY.current + (fieldBottom - visibleBottom) + 16;
+    scrollViewRef.current?.scrollTo({
+      y: Math.max(0, nextOffset),
+      animated: true,
+    });
+  }, []);
+
+  const scheduleScrollForFocusedField = useCallback((layout: { y: number; height: number }) => {
+    pendingFocusRef.current = layout;
+
+    if (keyboardScrollTimeoutRef.current) {
+      clearTimeout(keyboardScrollTimeoutRef.current);
+    }
+
+    keyboardScrollTimeoutRef.current = setTimeout(() => {
+      scrollFocusedFieldIntoView(layout);
+    }, 180);
+  }, [scrollFocusedFieldIntoView]);
+
+  const handleInputFocus = useCallback((layout: { y: number; height: number }) => {
+    if (keyboardVisibleRef.current) {
+      scheduleScrollForFocusedField(layout);
+    } else {
+      pendingFocusRef.current = layout;
+    }
+  }, [scheduleScrollForFocusedField]);
+
+  const handleCommentFocus = useCallback(() => {
+    commentRef.current?.measureInWindow((...measure) => {
+      const [, y, , height] = measure;
+      handleInputFocus({ y, height });
+    });
+  }, [handleInputFocus]);
+
+  useEffect(() => {
+    const syncKeyboardFrame = (event: any) => {
+      keyboardVisibleRef.current = true;
+      keyboardTopRef.current = event.endCoordinates.screenY;
+
+      if (pendingFocusRef.current) {
+        if (keyboardSettledTimeoutRef.current) {
+          clearTimeout(keyboardSettledTimeoutRef.current);
+        }
+
+        keyboardSettledTimeoutRef.current = setTimeout(() => {
+          if (pendingFocusRef.current) {
+            scheduleScrollForFocusedField(pendingFocusRef.current);
+          }
+        }, 60);
+      }
+    };
+
+    const showSubscription = Keyboard.addListener('keyboardDidShow', syncKeyboardFrame);
+    const frameSubscriptions =
+      Platform.OS === 'ios'
+        ? [
+            Keyboard.addListener('keyboardWillChangeFrame', syncKeyboardFrame),
+            Keyboard.addListener('keyboardDidChangeFrame', syncKeyboardFrame),
+          ]
+        : [];
+
+    const hideSubscription = Keyboard.addListener('keyboardDidHide', () => {
+      keyboardVisibleRef.current = false;
+      keyboardTopRef.current = Dimensions.get('window').height;
+
+      if (keyboardScrollTimeoutRef.current) {
+        clearTimeout(keyboardScrollTimeoutRef.current);
+        keyboardScrollTimeoutRef.current = null;
+      }
+      if (keyboardSettledTimeoutRef.current) {
+        clearTimeout(keyboardSettledTimeoutRef.current);
+        keyboardSettledTimeoutRef.current = null;
+      }
+    });
+
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+      frameSubscriptions.forEach((subscription) => subscription.remove());
+      if (keyboardScrollTimeoutRef.current) {
+        clearTimeout(keyboardScrollTimeoutRef.current);
+      }
+      if (keyboardSettledTimeoutRef.current) {
+        clearTimeout(keyboardSettledTimeoutRef.current);
+      }
+    };
+  }, [scheduleScrollForFocusedField]);
+
+  const handleScroll = (event: any) => {
+    scrollViewY.current = event.nativeEvent.contentOffset.y;
+  };
+
+  const loadServices = useCallback(async () => {
     try {
       const services = await getUniqueServices();
       setAvailableServices(services);
@@ -81,9 +195,9 @@ export default function RatingFormScreen() {
     } finally {
       setIsLoadingServices(false);
     }
-  };
+  }, []);
 
-  const loadRating = async () => {
+  const loadRating = useCallback(async () => {
     try {
       const docRef = doc(db, 'ratings', id);
       const docSnap = await getDoc(docRef);
@@ -106,7 +220,7 @@ export default function RatingFormScreen() {
     } finally {
       setIsFetching(false);
     }
-  };
+  }, [id, show]);
 
   const validate = (): boolean => {
     const newErrors: typeof errors = {};
@@ -202,27 +316,36 @@ export default function RatingFormScreen() {
         style={styles.container}
       >
         <ScrollView
+          ref={scrollViewRef}
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+          bounces={false}
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
         >
         {/* Formulário */}
         <View style={styles.form}>
           {/* WhatsApp do prestador */}
           <WhatsappInput
+            ref={whatsappRef}
             value={whatsapp}
             onChangeValue={setWhatsapp}
             label="WhatsApp do prestador"
             readonly={isEditing}
             error={errors.whatsapp}
+            onFocusWithPosition={handleInputFocus}
           />
 
           {/* Nome do prestador */}
           <InputField
+            ref={prestadorRef}
             label="Nome do prestador"
             value={prestadorNome}
             onChangeText={setPrestadorNome}
             placeholder="Ex: João Silva"
             error={errors.prestadorNome}
+            onFocusWithPosition={handleInputFocus}
           />
 
           {/* Serviço prestado */}
@@ -253,6 +376,7 @@ export default function RatingFormScreen() {
           <View style={styles.commentSection}>
             <Text style={styles.label}>Comentário</Text>
             <TextInput
+              ref={commentRef}
               style={[styles.commentInput, errors.comment && styles.commentInputError]}
               value={comment}
               onChangeText={setComment}
@@ -261,6 +385,7 @@ export default function RatingFormScreen() {
               multiline
               numberOfLines={5}
               textAlignVertical="top"
+              onFocus={handleCommentFocus}
             />
             {errors.comment && <Text style={styles.errorText}>{errors.comment}</Text>}
             <Text style={styles.charCount}>{comment.length} caracteres</Text>
@@ -300,6 +425,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
+    paddingBottom: 96,
   },
   form: {
     paddingHorizontal: 24,

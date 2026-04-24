@@ -44,6 +44,7 @@ export default function RegisterScreen() {
   const confirmPasswordRef = useRef<InputFieldRef>(null);
   const keyboardTopRef = useRef(Dimensions.get('window').height);
   const keyboardVisibleRef = useRef(false);
+  const keyboardSettledTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const keyboardScrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingFocusRef = useRef<{ y: number; height: number } | null>(null);
 
@@ -63,38 +64,52 @@ export default function RegisterScreen() {
     });
   }, []);
 
-  const handleInputFocus = useCallback((layout: { y: number; height: number }) => {
+  const scheduleScrollForFocusedField = useCallback((layout: { y: number; height: number }) => {
     pendingFocusRef.current = layout;
-    if (keyboardVisibleRef.current) {
-      if (keyboardScrollTimeoutRef.current) {
-        clearTimeout(keyboardScrollTimeoutRef.current);
-      }
 
-      keyboardScrollTimeoutRef.current = setTimeout(() => {
-        scrollFocusedFieldIntoView(layout);
-      }, 120);
+    if (keyboardScrollTimeoutRef.current) {
+      clearTimeout(keyboardScrollTimeoutRef.current);
     }
+
+    keyboardScrollTimeoutRef.current = setTimeout(() => {
+      scrollFocusedFieldIntoView(layout);
+    }, 180);
   }, [scrollFocusedFieldIntoView]);
 
-  useEffect(() => {
-    const keyboardShowEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+  const handleInputFocus = useCallback((layout: { y: number; height: number }) => {
+    if (keyboardVisibleRef.current) {
+      scheduleScrollForFocusedField(layout);
+    } else {
+      pendingFocusRef.current = layout;
+    }
+  }, [scheduleScrollForFocusedField]);
 
-    const showSubscription = Keyboard.addListener(keyboardShowEvent, (event) => {
+  useEffect(() => {
+    const syncKeyboardFrame = (event: any) => {
       keyboardVisibleRef.current = true;
       keyboardTopRef.current = event.endCoordinates.screenY;
 
       if (pendingFocusRef.current) {
-        if (keyboardScrollTimeoutRef.current) {
-          clearTimeout(keyboardScrollTimeoutRef.current);
+        if (keyboardSettledTimeoutRef.current) {
+          clearTimeout(keyboardSettledTimeoutRef.current);
         }
 
-        keyboardScrollTimeoutRef.current = setTimeout(() => {
+        keyboardSettledTimeoutRef.current = setTimeout(() => {
           if (pendingFocusRef.current) {
-            scrollFocusedFieldIntoView(pendingFocusRef.current);
+            scheduleScrollForFocusedField(pendingFocusRef.current);
           }
-        }, 120);
+        }, 60);
       }
-    });
+    };
+
+    const showSubscription = Keyboard.addListener('keyboardDidShow', syncKeyboardFrame);
+    const frameSubscriptions =
+      Platform.OS === 'ios'
+        ? [
+            Keyboard.addListener('keyboardWillChangeFrame', syncKeyboardFrame),
+            Keyboard.addListener('keyboardDidChangeFrame', syncKeyboardFrame),
+          ]
+        : [];
 
     const hideSubscription = Keyboard.addListener('keyboardDidHide', () => {
       keyboardVisibleRef.current = false;
@@ -104,34 +119,27 @@ export default function RegisterScreen() {
         clearTimeout(keyboardScrollTimeoutRef.current);
         keyboardScrollTimeoutRef.current = null;
       }
+      if (keyboardSettledTimeoutRef.current) {
+        clearTimeout(keyboardSettledTimeoutRef.current);
+        keyboardSettledTimeoutRef.current = null;
+      }
     });
 
     return () => {
       showSubscription.remove();
       hideSubscription.remove();
+      frameSubscriptions.forEach((subscription) => subscription.remove());
       if (keyboardScrollTimeoutRef.current) {
         clearTimeout(keyboardScrollTimeoutRef.current);
       }
+      if (keyboardSettledTimeoutRef.current) {
+        clearTimeout(keyboardSettledTimeoutRef.current);
+      }
     };
-  }, [scrollFocusedFieldIntoView]);
+  }, [scheduleScrollForFocusedField]);
 
   const handleScroll = (event: any) => {
     scrollViewY.current = event.nativeEvent.contentOffset.y;
-  };
-
-  const fillRandomData = () => {
-    const randomId = Math.random().toString(36).substring(2, 10);
-    const firstNames = ['joao', 'maria', 'carlos', 'ana', 'pedro', 'julia', 'lucas', 'fernanda'];
-    const lastNames = ['silva', 'santos', 'oliveira', 'souza', 'lima', 'costa', 'ferreira'];
-    const randomFirstName = firstNames[Math.floor(Math.random() * firstNames.length)];
-    const randomLastName = lastNames[Math.floor(Math.random() * lastNames.length)];
-
-    setDisplayName(`${randomFirstName}${randomId.slice(0, 4)}`);
-    setFullName(`${randomFirstName.charAt(0).toUpperCase() + randomFirstName.slice(1)} ${randomLastName.charAt(0).toUpperCase() + randomLastName.slice(1)}`);
-    setEmail(`danilofsouza+${Date.now()}@gmail.com`);
-    setPhone(`5511${Math.floor(Math.random() * 900000000 + 100000000)}`);
-    setPassword('123456');
-    setConfirmPassword('123456');
   };
 
   const handleRegister = async () => {
@@ -262,9 +270,7 @@ export default function RegisterScreen() {
               <Ionicons name="chevron-back" size={28} color="#000" />
             </TouchableOpacity>
             <Text style={styles.headerTitle}>Criar conta</Text>
-            <TouchableOpacity onPress={fillRandomData}>
-              <Ionicons name="dice" size={24} color="#000" />
-            </TouchableOpacity>
+            <View style={styles.headerSpacer} />
           </View>
 
           {/* Form */}

@@ -2,7 +2,9 @@ import { ArrowDown01Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react-native';
 import React, { useState } from 'react';
 import {
+  KeyboardAvoidingView,
   Modal,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -24,7 +26,7 @@ export function ServiceSelect({
   services,
   selectedService,
   onSelectService,
-  placeholder = 'Selecione um serviço',
+  placeholder = 'Selecione um serviÃ§o',
   label,
   allowCustom = false,
 }: ServiceSelectProps) {
@@ -32,28 +34,33 @@ export function ServiceSelect({
   const [showCustomInput, setShowCustomInput] = useState(false);
   const [customService, setCustomService] = useState('');
 
+  const closeModal = () => {
+    setModalVisible(false);
+    setShowCustomInput(false);
+    setCustomService('');
+  };
+
   const handleSelect = (service: string) => {
     if (service === 'OUTRO') {
       setShowCustomInput(true);
-    } else {
-      onSelectService(service);
-      setModalVisible(false);
+      return;
     }
+
+    onSelectService(service);
+    closeModal();
   };
 
   const handleCustomSubmit = () => {
     if (customService.trim()) {
       onSelectService(customService.trim());
-      setModalVisible(false);
-      setShowCustomInput(false);
-      setCustomService('');
+      closeModal();
     }
   };
 
   return (
     <View style={styles.container}>
       {label && <Text style={styles.label}>{label}</Text>}
-      
+
       <TouchableOpacity
         style={styles.selectButton}
         onPress={() => setModalVisible(true)}
@@ -68,106 +75,105 @@ export function ServiceSelect({
       <Modal
         visible={modalVisible}
         animationType="slide"
-        transparent={true}
+        transparent
         presentationStyle="overFullScreen"
         statusBarTranslucent
-        onRequestClose={() => {
-          setModalVisible(false);
-          setShowCustomInput(false);
-          setCustomService('');
-        }}
+        onRequestClose={closeModal}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>
-                {showCustomInput ? 'Novo serviço' : 'Selecione o serviço'}
-              </Text>
-              <TouchableOpacity
-                onPress={() => {
-                  setModalVisible(false);
-                  setShowCustomInput(false);
-                  setCustomService('');
-                }}
-                style={styles.closeButton}
-              >
-                <Text style={styles.closeButtonText}>Fechar</Text>
-              </TouchableOpacity>
-            </View>
-
-            {showCustomInput ? (
-              <View style={styles.customInputContainer}>
-                <Text style={styles.customInputLabel}>Digite o nome do serviço:</Text>
-                <TextInput
-                  style={styles.customInput}
-                  value={customService}
-                  onChangeText={setCustomService}
-                  placeholder="Ex: Eletricista, Encanador..."
-                  placeholderTextColor="#9CA3AF"
-                  autoFocus
-                />
-                <View style={styles.customButtons}>
-                  <TouchableOpacity
-                    style={styles.customButtonCancel}
-                    onPress={() => {
-                      setShowCustomInput(false);
-                      setCustomService('');
-                    }}
-                  >
-                    <Text style={styles.customButtonCancelText}>Voltar</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[
-                      styles.customButtonConfirm,
-                      !customService.trim() && styles.customButtonDisabled,
-                    ]}
-                    onPress={handleCustomSubmit}
-                    disabled={!customService.trim()}
-                  >
-                    <Text style={styles.customButtonConfirmText}>Confirmar</Text>
-                  </TouchableOpacity>
-                </View>
+        <KeyboardAvoidingView
+          style={styles.modalKeyboardAvoiding}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>
+                  {showCustomInput ? 'Novo serviÃ§o' : 'Selecione o serviÃ§o'}
+                </Text>
+                <TouchableOpacity onPress={closeModal} style={styles.closeButton}>
+                  <Text style={styles.closeButtonText}>Fechar</Text>
+                </TouchableOpacity>
               </View>
-            ) : (
-              <>
-                {allowCustom && (
-                  <View style={styles.topAction}>
+
+              {showCustomInput ? (
+                <ScrollView
+                  contentContainerStyle={styles.customInputContainer}
+                  keyboardShouldPersistTaps="handled"
+                  showsVerticalScrollIndicator={false}
+                >
+                  <Text style={styles.customInputLabel}>Digite o nome do serviÃ§o:</Text>
+                  <TextInput
+                    style={styles.customInput}
+                    value={customService}
+                    onChangeText={setCustomService}
+                    placeholder="Ex: Eletricista, Encanador..."
+                    placeholderTextColor="#9CA3AF"
+                    autoFocus
+                    returnKeyType="done"
+                    blurOnSubmit
+                    onSubmitEditing={handleCustomSubmit}
+                  />
+                  <View style={styles.customButtons}>
                     <TouchableOpacity
-                      style={styles.otherOptionButton}
-                      onPress={() => handleSelect('OUTRO')}
+                      style={styles.customButtonCancel}
+                      onPress={() => {
+                        setShowCustomInput(false);
+                        setCustomService('');
+                      }}
                     >
-                      <Text style={styles.otherOptionText}>
-                        + Outro serviço
-                      </Text>
+                      <Text style={styles.customButtonCancelText}>Voltar</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[
+                        styles.customButtonConfirm,
+                        !customService.trim() && styles.customButtonDisabled,
+                      ]}
+                      onPress={handleCustomSubmit}
+                      disabled={!customService.trim()}
+                    >
+                      <Text style={styles.customButtonConfirmText}>Confirmar</Text>
                     </TouchableOpacity>
                   </View>
-                )}
-
-                <ScrollView style={styles.optionsList}>
-                  {services.map((service) => (
-                    <TouchableOpacity
-                      key={service}
-                      style={[
-                        styles.optionItem,
-                        selectedService === service && styles.optionItemSelected,
-                      ]}
-                      onPress={() => handleSelect(service)}
-                    >
-                      <Text
-                        style={[
-                          styles.optionText,
-                          selectedService === service && styles.optionTextSelected,
-                        ]}
-                      >
-                        {service}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
                 </ScrollView>
-              </>
-            )}
+              ) : (
+                <>
+                  {allowCustom && (
+                    <View style={styles.topAction}>
+                      <TouchableOpacity
+                        style={styles.otherOptionButton}
+                        onPress={() => handleSelect('OUTRO')}
+                      >
+                        <Text style={styles.otherOptionText}>+ Outro serviÃ§o</Text>
+                      </TouchableOpacity>
+                    </View>
+                  )}
+
+                  <ScrollView style={styles.optionsList} keyboardShouldPersistTaps="handled">
+                    {services.map((service) => (
+                      <TouchableOpacity
+                        key={service}
+                        style={[
+                          styles.optionItem,
+                          selectedService === service && styles.optionItemSelected,
+                        ]}
+                        onPress={() => handleSelect(service)}
+                      >
+                        <Text
+                          style={[
+                            styles.optionText,
+                            selectedService === service && styles.optionTextSelected,
+                          ]}
+                        >
+                          {service}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                </>
+              )}
+            </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   );
@@ -201,6 +207,9 @@ const styles = StyleSheet.create({
   },
   placeholder: {
     color: '#9CA3AF',
+  },
+  modalKeyboardAvoiding: {
+    flex: 1,
   },
   modalOverlay: {
     flex: 1,
@@ -314,13 +323,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#1C1C1E',
     alignItems: 'center',
   },
+  customButtonDisabled: {
+    opacity: 0.5,
+  },
   customButtonConfirmText: {
     fontSize: 16,
     fontWeight: '600',
     color: '#fff',
   },
-  customButtonDisabled: {
-    opacity: 0.5,
-  },
 });
-

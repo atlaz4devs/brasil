@@ -37,6 +37,7 @@ export default function LoginScreen() {
   const passwordRef = useRef<InputFieldRef>(null);
   const keyboardTopRef = useRef(Dimensions.get('window').height);
   const keyboardVisibleRef = useRef(false);
+  const keyboardSettledTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const keyboardScrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingFocusRef = useRef<{ y: number; height: number } | null>(null);
 
@@ -56,38 +57,52 @@ export default function LoginScreen() {
     });
   }, []);
 
-  const handleInputFocus = useCallback((layout: { y: number; height: number }) => {
+  const scheduleScrollForFocusedField = useCallback((layout: { y: number; height: number }) => {
     pendingFocusRef.current = layout;
-    if (keyboardVisibleRef.current) {
-      if (keyboardScrollTimeoutRef.current) {
-        clearTimeout(keyboardScrollTimeoutRef.current);
-      }
 
-      keyboardScrollTimeoutRef.current = setTimeout(() => {
-        scrollFocusedFieldIntoView(layout);
-      }, 120);
+    if (keyboardScrollTimeoutRef.current) {
+      clearTimeout(keyboardScrollTimeoutRef.current);
     }
+
+    keyboardScrollTimeoutRef.current = setTimeout(() => {
+      scrollFocusedFieldIntoView(layout);
+    }, 180);
   }, [scrollFocusedFieldIntoView]);
 
-  useEffect(() => {
-    const keyboardShowEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+  const handleInputFocus = useCallback((layout: { y: number; height: number }) => {
+    if (keyboardVisibleRef.current) {
+      scheduleScrollForFocusedField(layout);
+    } else {
+      pendingFocusRef.current = layout;
+    }
+  }, [scheduleScrollForFocusedField]);
 
-    const showSubscription = Keyboard.addListener(keyboardShowEvent, (event) => {
+  useEffect(() => {
+    const syncKeyboardFrame = (event: any) => {
       keyboardVisibleRef.current = true;
       keyboardTopRef.current = event.endCoordinates.screenY;
 
       if (pendingFocusRef.current) {
-        if (keyboardScrollTimeoutRef.current) {
-          clearTimeout(keyboardScrollTimeoutRef.current);
+        if (keyboardSettledTimeoutRef.current) {
+          clearTimeout(keyboardSettledTimeoutRef.current);
         }
 
-        keyboardScrollTimeoutRef.current = setTimeout(() => {
+        keyboardSettledTimeoutRef.current = setTimeout(() => {
           if (pendingFocusRef.current) {
-            scrollFocusedFieldIntoView(pendingFocusRef.current);
+            scheduleScrollForFocusedField(pendingFocusRef.current);
           }
-        }, 120);
+        }, 60);
       }
-    });
+    };
+
+    const showSubscription = Keyboard.addListener('keyboardDidShow', syncKeyboardFrame);
+    const frameSubscriptions =
+      Platform.OS === 'ios'
+        ? [
+            Keyboard.addListener('keyboardWillChangeFrame', syncKeyboardFrame),
+            Keyboard.addListener('keyboardDidChangeFrame', syncKeyboardFrame),
+          ]
+        : [];
 
     const hideSubscription = Keyboard.addListener('keyboardDidHide', () => {
       keyboardVisibleRef.current = false;
@@ -97,16 +112,24 @@ export default function LoginScreen() {
         clearTimeout(keyboardScrollTimeoutRef.current);
         keyboardScrollTimeoutRef.current = null;
       }
+      if (keyboardSettledTimeoutRef.current) {
+        clearTimeout(keyboardSettledTimeoutRef.current);
+        keyboardSettledTimeoutRef.current = null;
+      }
     });
 
     return () => {
       showSubscription.remove();
       hideSubscription.remove();
+      frameSubscriptions.forEach((subscription) => subscription.remove());
       if (keyboardScrollTimeoutRef.current) {
         clearTimeout(keyboardScrollTimeoutRef.current);
       }
+      if (keyboardSettledTimeoutRef.current) {
+        clearTimeout(keyboardSettledTimeoutRef.current);
+      }
     };
-  }, [scrollFocusedFieldIntoView]);
+  }, [scheduleScrollForFocusedField]);
 
   const handleScroll = (event: any) => {
     scrollViewY.current = event.nativeEvent.contentOffset.y;
