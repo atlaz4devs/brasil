@@ -12,8 +12,6 @@ on:
         required: true
         default: all
         options:
-          - all
-          - ios
           - android
 
 jobs:
