@@ -1,6 +1,9 @@
 name: EAS Build Produção
 
 on:
+  push:
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       platform:
@@ -24,7 +27,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
 
       - name: Setup Expo e EAS
@@ -40,7 +43,7 @@ jobs:
       - name: Rodar build na EAS
         run: |
           eas build \
-            --platform "${{ inputs.platform }}" \
+            --platform "${{ inputs.platform || 'all' }}" \
             --profile production \
             --non-interactive \
             --no-wait
