@@ -27,7 +27,7 @@ describe('whatsapp-service', () => {
 
   it('mostra o codigo somente antes de 10/05/2026', () => {
     expect(shouldRevealVerificationCode(new Date(2026, 3, 30))).toBe(true);
-    expect(shouldRevealVerificationCode(new Date(2026, 4, 10))).toBe(false);
+    expect(shouldRevealVerificationCode(new Date(2026, 4, 10, 23, 59, 59, 999))).toBe(true);
     expect(shouldRevealVerificationCode(new Date(2026, 4, 11))).toBe(false);
   });
 

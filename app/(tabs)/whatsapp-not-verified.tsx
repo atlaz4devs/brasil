@@ -10,8 +10,9 @@ import {
   verifyStoredCode,
 } from '@/services/whatsapp-service';
 import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import { signOut } from 'firebase/auth';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   NativeSyntheticEvent,
   StyleSheet,
@@ -71,21 +72,23 @@ export default function WhatsAppNotVerifiedScreen() {
     }
   }, [countdown]);
 
-  useEffect(() => {
-    const loadSavedCode = async () => {
-      const userId = auth.currentUser?.uid;
-      if (!userId) {
-        return;
-      }
+  const loadSavedCode = useCallback(async () => {
+    const userId = auth.currentUser?.uid;
+    if (!userId) {
+      return;
+    }
 
-      const savedCode = await getReusableVerificationCode(userId);
-      if (savedCode) {
-        setVerificationCode(savedCode);
-      }
-    };
-
-    void loadSavedCode();
+    const savedCode = await getReusableVerificationCode(userId);
+    if (savedCode) {
+      setVerificationCode(savedCode);
+    }
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      void loadSavedCode();
+    }, [loadSavedCode])
+  );
 
   const handleSendCode = async () => {
     if (countdown > 0) return;

@@ -5,7 +5,7 @@ const WHATSAPP_API_VERSION = 'v24.0';
 const WHATSAPP_API_URL = `https://graph.facebook.com/${WHATSAPP_API_VERSION}`;
 const USERS_COLLECTION = 'users';
 const VERIFICATION_CODE_TTL_MS = 15 * 60 * 1000;
-const WHATSAPP_CODE_REVEAL_DEADLINE = new Date(2026, 4, 10);
+const WHATSAPP_CODE_REVEAL_DEADLINE = new Date(2026, 4, 10, 23, 59, 59, 999);
 
 const ACCESS_TOKEN = process.env.EXPO_PUBLIC_WHATSAPP_ACCESS_TOKEN!;
 const PHONE_NUMBER_ID = process.env.EXPO_PUBLIC_WHATSAPP_PHONE_NUMBER_ID!;
@@ -133,7 +133,7 @@ export function generateVerificationCode(): string {
 }
 
 export function shouldRevealVerificationCode(now: Date = new Date()): boolean {
-  return now < WHATSAPP_CODE_REVEAL_DEADLINE;
+  return now <= WHATSAPP_CODE_REVEAL_DEADLINE;
 }
 
 async function readStoredVerificationCode(userId: string): Promise<StoredVerificationCode | null> {
