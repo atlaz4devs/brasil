@@ -36,7 +36,7 @@ describe('whatsapp-service', () => {
       exists: () => true,
       data: () => ({
         whatsappVerificationCode: '123456',
-        whatsappVerificationCodeExpiresAt: Date.now() + 5 * 60 * 1000,
+        whatsappVerificationCodeExpiresAt: Date.now() + 15 * 60 * 1000,
       }),
     });
 
@@ -52,7 +52,7 @@ describe('whatsapp-service', () => {
       exists: () => true,
       data: () => ({
         whatsappVerificationCode: '654321',
-        whatsappVerificationCodeExpiresAt: Date.now() + 5 * 60 * 1000,
+        whatsappVerificationCodeExpiresAt: Date.now() + 15 * 60 * 1000,
       }),
     });
 
@@ -60,5 +60,25 @@ describe('whatsapp-service', () => {
 
     expect(isValid).toBe(true);
     expect(setDoc).toHaveBeenCalled();
+  });
+
+  it('gera um novo codigo ao reenviar quando o anterior expirou', async () => {
+    const randomSpy = jest.spyOn(Math, 'random').mockReturnValue(0);
+
+    (getDoc as jest.Mock).mockResolvedValue({
+      exists: () => true,
+      data: () => ({
+        whatsappVerificationCode: '123456',
+        whatsappVerificationCodeExpiresAt: Date.now() - 1,
+      }),
+    });
+
+    await sendVerificationCodeForUser('user-3', '5511999999999');
+
+    expect(setDoc).toHaveBeenCalledTimes(2);
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+    expect((global.fetch as jest.Mock).mock.calls[0][1].body).toContain('100000');
+
+    randomSpy.mockRestore();
   });
 });

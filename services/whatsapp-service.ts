@@ -4,7 +4,7 @@ import { deleteField, doc, getDoc, setDoc } from 'firebase/firestore';
 const WHATSAPP_API_VERSION = 'v24.0';
 const WHATSAPP_API_URL = `https://graph.facebook.com/${WHATSAPP_API_VERSION}`;
 const USERS_COLLECTION = 'users';
-const VERIFICATION_CODE_TTL_MS = 5 * 60 * 1000;
+const VERIFICATION_CODE_TTL_MS = 15 * 60 * 1000;
 const WHATSAPP_CODE_REVEAL_DEADLINE = new Date(2026, 4, 10);
 
 const ACCESS_TOKEN = process.env.EXPO_PUBLIC_WHATSAPP_ACCESS_TOKEN!;
