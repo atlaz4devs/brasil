@@ -72,7 +72,12 @@ export default function WhatsAppNotVerifiedScreen() {
     }
   }, [countdown]);
 
-  const loadSavedCode = useCallback(async () => {
+  const ensureVerificationCode = useCallback(async () => {
+    if (!shouldRevealVerificationCode()) {
+      setVerificationCode('');
+      return;
+    }
+
     const userId = auth.currentUser?.uid;
     if (!userId) {
       return;
@@ -81,13 +86,23 @@ export default function WhatsAppNotVerifiedScreen() {
     const savedCode = await getReusableVerificationCode(userId);
     if (savedCode) {
       setVerificationCode(savedCode);
+      return;
     }
+
+    const userProfile = await getUserProfile(userId);
+    if (!userProfile?.phoneNumber) {
+      return;
+    }
+
+    const code = await sendVerificationCodeForUser(userId, userProfile.phoneNumber);
+    setVerificationCode(code);
+    setCountdown(60);
   }, []);
 
   useFocusEffect(
     useCallback(() => {
-      void loadSavedCode();
-    }, [loadSavedCode])
+      void ensureVerificationCode();
+    }, [ensureVerificationCode])
   );
 
   const handleSendCode = async () => {
