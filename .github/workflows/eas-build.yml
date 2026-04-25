@@ -34,5 +34,6 @@ jobs:
           eas build \
             --platform android \
             --profile production \
+            --auto-submit \
             --non-interactive \
             --no-wait
