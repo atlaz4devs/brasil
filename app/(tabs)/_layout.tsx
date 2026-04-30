@@ -5,6 +5,7 @@ import React from 'react';
 
 import { HapticTab } from '@/components/haptic-tab';
 import { useAuth } from '@/contexts/auth-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import EmailNotVerifiedScreen from './email-not-verified';
 import WhatsappNotVerifiedScreen from './whatsapp-not-verified';
 
@@ -12,6 +13,9 @@ export default function TabLayout() {
   const activeColor = '#0066FF';
   const inactiveColor = '#9CA3AF';
   const { user } = useAuth();
+  const insets = useSafeAreaInsets();
+  const bottomInset = Math.max(insets.bottom, 12);
+
   if (!user) {
     return <Redirect href="/auth/welcome" />;
   }
@@ -35,6 +39,8 @@ export default function TabLayout() {
           borderTopWidth: 1,
           borderTopColor: '#F3F4F6',
           paddingTop: 10,
+          paddingBottom: bottomInset,
+          height: 60 + bottomInset,
         },
         tabBarLabelStyle: {
           fontSize: 9,

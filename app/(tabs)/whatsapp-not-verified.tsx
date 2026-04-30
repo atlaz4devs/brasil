@@ -5,7 +5,8 @@ import { auth } from '@/firebaseConfig';
 import { getUserProfile, updateUserProfile } from '@/services/user-service';
 import {
   getReusableVerificationCode,
-  sendVerificationCodeForUser,
+  getOrCreateVerificationCode,
+  sendVerificationCode,
   shouldRevealVerificationCode,
   verifyStoredCode,
 } from '@/services/whatsapp-service';
@@ -94,9 +95,18 @@ export default function WhatsAppNotVerifiedScreen() {
       return;
     }
 
-    const code = await sendVerificationCodeForUser(userId, userProfile.phoneNumber);
+    const { code } = await getOrCreateVerificationCode(userId);
     setVerificationCode(code);
-    setCountdown(60);
+
+    try {
+      await sendVerificationCode(userProfile.phoneNumber, code);
+      setCountdown(60);
+    } catch (error) {
+      console.error('Erro ao enviar codigo de WhatsApp:', error);
+      show('Codigo gerado, mas nao foi possivel enviar via WhatsApp.', {
+        backgroundColor: '#ba1a1a',
+      });
+    }
   }, []);
 
   useFocusEffect(
@@ -119,11 +129,19 @@ export default function WhatsAppNotVerifiedScreen() {
         return;
       }
 
-      const code = await sendVerificationCodeForUser(userId, userProfile.phoneNumber);
+      const { code } = await getOrCreateVerificationCode(userId);
       setVerificationCode(code);
 
-      show('Codigo enviado para seu WhatsApp!', { backgroundColor: '#22c55e' });
-      setCountdown(60);
+      try {
+        await sendVerificationCode(userProfile.phoneNumber, code);
+        show('Codigo enviado para seu WhatsApp!', { backgroundColor: '#22c55e' });
+        setCountdown(60);
+      } catch (error) {
+        console.error('Erro ao reenviar codigo de WhatsApp:', error);
+        show('Codigo gerado, mas nao foi possivel enviar via WhatsApp.', {
+          backgroundColor: '#ba1a1a',
+        });
+      }
     } catch {
       show('Erro ao enviar codigo.', { backgroundColor: '#ba1a1a' });
     } finally {

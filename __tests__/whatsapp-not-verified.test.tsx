@@ -2,7 +2,8 @@ import { render, screen, waitFor } from '@testing-library/react-native';
 import WhatsAppNotVerifiedScreen from '../app/(tabs)/whatsapp-not-verified';
 import {
   getReusableVerificationCode,
-  sendVerificationCodeForUser,
+  getOrCreateVerificationCode,
+  sendVerificationCode,
   shouldRevealVerificationCode,
 } from '../services/whatsapp-service';
 import { getUserProfile } from '../services/user-service';
@@ -34,7 +35,8 @@ jest.mock('../services/user-service', () => ({
 
 jest.mock('../services/whatsapp-service', () => ({
   getReusableVerificationCode: jest.fn().mockName('getReusableVerificationCode'),
-  sendVerificationCodeForUser: jest.fn().mockName('sendVerificationCodeForUser'),
+  getOrCreateVerificationCode: jest.fn().mockName('getOrCreateVerificationCode'),
+  sendVerificationCode: jest.fn().mockName('sendVerificationCode'),
   shouldRevealVerificationCode: jest.fn().mockName('shouldRevealVerificationCode'),
   verifyStoredCode: jest.fn().mockName('verifyStoredCode'),
 }));
@@ -71,16 +73,33 @@ describe('WhatsAppNotVerifiedScreen', () => {
     jest.clearAllMocks();
     mockFocusEffectCalled = false;
     (getReusableVerificationCode as jest.Mock).mockResolvedValue(null);
-    (sendVerificationCodeForUser as jest.Mock).mockResolvedValue('123456');
+    (getOrCreateVerificationCode as jest.Mock).mockResolvedValue({ code: '123456', expiresAt: Date.now() + 15 * 60 * 1000 });
+    (sendVerificationCode as jest.Mock).mockResolvedValue({ success: true });
     (getUserProfile as jest.Mock).mockResolvedValue({ phoneNumber: '5511999999999' });
     (shouldRevealVerificationCode as jest.Mock).mockReturnValue(true);
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
   it('gera e exibe o codigo ao entrar na tela antes de 10/05/2026', async () => {
     render(<WhatsAppNotVerifiedScreen />);
 
     await waitFor(() => {
-      expect(sendVerificationCodeForUser).toHaveBeenCalledWith('user-1', '5511999999999');
+      expect(getOrCreateVerificationCode).toHaveBeenCalledWith('user-1');
+      expect(sendVerificationCode).toHaveBeenCalledWith('5511999999999', '123456');
+      expect(screen.getByText('123456')).toBeTruthy();
+    });
+  });
+
+  it('mantem o codigo visivel mesmo quando o envio falha', async () => {
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    (sendVerificationCode as jest.Mock).mockRejectedValue(new Error('envio indisponivel'));
+
+    render(<WhatsAppNotVerifiedScreen />);
+
+    await waitFor(() => {
       expect(screen.getByText('123456')).toBeTruthy();
     });
   });
@@ -91,7 +110,7 @@ describe('WhatsAppNotVerifiedScreen', () => {
     render(<WhatsAppNotVerifiedScreen />);
 
     await waitFor(() => {
-      expect(sendVerificationCodeForUser).not.toHaveBeenCalled();
+      expect(sendVerificationCode).not.toHaveBeenCalled();
       expect(screen.queryByText('123456')).toBeNull();
     });
   });
